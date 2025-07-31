@@ -1,5 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const cake = document.querySelector(".cake");
+    const cake = document.querySelector(".cake");
+  for (let i = 0; i < 32; i++) {
+    let left = Math.random() * cake.offsetWidth;
+    let top = Math.random() * cake.offsetHeight;
+    addCandle(left, top);
+  }
+const cake = document.querySelector(".cake");
   const candleCountDisplay = document.getElementById("candleCount");
   let candles = [];
   let audioContext;
