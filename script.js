@@ -2,9 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const cake = document.querySelector(".cake");
   const candleCountDisplay = document.getElementById("candleCount");
   let candles = [];
-  let audioContext;
-  let analyser;
-  let microphone;
 
   function updateCandleCount() {
     const activeCandles = candles.filter(
@@ -16,8 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
   function addCandle(left, top) {
     const candle = document.createElement("div");
     candle.className = "candle";
-    candle.style.left = left + "px";
-    candle.style.top = top + "px";
+    candle.style.left = `${left}px`;
+    candle.style.top = `${top}px`;
 
     const flame = document.createElement("div");
     flame.className = "flame";
@@ -26,13 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
     cake.appendChild(candle);
     candles.push(candle);
     updateCandleCount();
-  }
-
-  // Crear 32 velitas al azar
-  for (let i = 0; i < 32; i++) {
-    const left = Math.random() * (cake.offsetWidth - 20);
-    const top = Math.random() * (cake.offsetHeight - 40);
-    addCandle(left, top);
   }
 
   function blowOutCandles() {
@@ -53,9 +43,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      analyser = audioContext.createAnalyser();
-      microphone = audioContext.createMediaStreamSource(stream);
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
       microphone.connect(analyser);
       analyser.fftSize = 256;
 
@@ -75,6 +65,18 @@ document.addEventListener("DOMContentLoaded", function () {
       analyze();
     });
   }
+
+  // 🕓 Esperar un poco a que el pastel tenga tamaño antes de generar las velas
+  setTimeout(() => {
+    const cakeWidth = cake.offsetWidth;
+    const cakeHeight = cake.offsetHeight;
+
+    for (let i = 0; i < 32; i++) {
+      const left = Math.random() * (cakeWidth - 20);
+      const top = Math.random() * (cakeHeight - 40);
+      addCandle(left, top);
+    }
+  }, 100); // Espera 100ms antes de crear velas
 
   detectBlow();
 });
