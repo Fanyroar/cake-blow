@@ -1,11 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const cake = document.querySelector(".cake");
-  for (let i = 0; i < 32; i++) {
-    let left = Math.random() * cake.offsetWidth;
-    let top = Math.random() * cake.offsetHeight;
-    addCandle(left, top);
-  }
-
+  const cake = document.querySelector(".cake");
   const candleCountDisplay = document.getElementById("candleCount");
   let candles = [];
   let audioContext;
@@ -34,59 +28,53 @@ document.addEventListener("DOMContentLoaded", function () {
     updateCandleCount();
   }
 
-  cake.addEventListener("click", function (event) {
-    const rect = cake.getBoundingClientRect();
-    const left = event.clientX - rect.left;
-    const top = event.clientY - rect.top;
+  // Crear 32 velitas al azar
+  for (let i = 0; i < 32; i++) {
+    const left = Math.random() * (cake.offsetWidth - 20);
+    const top = Math.random() * (cake.offsetHeight - 40);
     addCandle(left, top);
-  });
-
-  function isBlowing() {
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyser.getByteFrequencyData(dataArray);
-
-    let sum = 0;
-    for (let i = 0; i < bufferLength; i++) {
-      sum += dataArray[i];
-    }
-    let average = sum / bufferLength;
-
-    return average > 40; //
   }
 
   function blowOutCandles() {
-    let blownOut = 0;
+    candles.forEach((candle) => {
+      if (!candle.classList.contains("out")) {
+        candle.classList.add("out");
+        const flame = candle.querySelector(".flame");
+        if (flame) flame.style.display = "none";
+      }
+    });
+    updateCandleCount();
+  }
 
-    if (isBlowing()) {
-      candles.forEach((candle) => {
-        if (!candle.classList.contains("out") && Math.random() > 0.5) {
-          candle.classList.add("out");
-          blownOut++;
+  function detectBlow() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Tu navegador no soporta entrada de micrófono.");
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      analyser.fftSize = 256;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      function analyze() {
+        analyser.getByteFrequencyData(dataArray);
+        const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+        if (volume > 50) {
+          blowOutCandles();
         }
-      });
-    }
 
-    if (blownOut > 0) {
-      updateCandleCount();
-    }
+        requestAnimationFrame(analyze);
+      }
+
+      analyze();
+    });
   }
 
-  if (navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then(function (stream) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        microphone = audioContext.createMediaStreamSource(stream);
-        microphone.connect(analyser);
-        analyser.fftSize = 256;
-        setInterval(blowOutCandles, 200);
-      })
-      .catch(function (err) {
-        console.log("Unable to access microphone: " + err);
-      });
-  } else {
-    console.log("getUserMedia not supported on your browser!");
-  }
+  detectBlow();
 });
